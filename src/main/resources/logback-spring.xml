@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="false">
 
-    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="opm-service"/>
+    <springProperty scope="context" name="appName"
+                    source="spring.application.name"
+                    defaultValue="op-service"/>
 
-    <!-- One-line pattern: timestamp level [traceId] [thread] logger - message -->
     <property name="LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId:-NO_TRACE}] [%thread] %logger{36} - %msg%n"/>
 
-    <!-- ===================== CONSOLE (always on, good for containers) ===================== -->
+    <!-- ===================== CONSOLE ===================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- ===================== ROLLING FILE (for environments that persist logs locally) ===================== -->
+    <!-- ===================== ROLLING FILE ===================== -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/${appName}.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -29,11 +30,10 @@
     </appender>
 
     <!-- ===================== ASYNC WRAPPERS ===================== -->
-    <!-- Async wrapping decouples logging I/O from request threads. -->
     <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>1024</queueSize>
-        <discardingThreshold>0</discardingThreshold>     <!-- never silently drop -->
-        <includeCallerData>false</includeCallerData>     <!-- true is expensive; keep false in prod -->
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
         <appender-ref ref="CONSOLE"/>
     </appender>
 
@@ -45,21 +45,25 @@
     </appender>
 
     <!-- ===================== NOISY THIRD-PARTY LIBS ===================== -->
-    <logger name="org.hibernate" level="WARN"/>
-    <logger name="com.zaxxer.hikari" level="WARN"/>
-    <logger name="org.springframework.jdbc" level="WARN"/>
-    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="org.hibernate"             level="WARN"/>
+    <logger name="com.zaxxer.hikari"         level="WARN"/>
+    <logger name="org.springframework.jdbc"  level="WARN"/>
+    <logger name="org.apache.kafka"          level="WARN"/>
 
-    <!-- ===================== PROFILE-SPECIFIC ROOT LEVEL ===================== -->
+    <!-- ===================== ROOT — always active, no profile needed ===================== -->
+    <!-- Console is always on. FILE appender added only for staging/prod below. -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+    </root>
+
+    <!-- ===================== PROFILE: local / dev — verbose ===================== -->
     <springProfile name="local,dev">
-        <logger name="com.custom.log.custom" level="DEBUG"/>
-        <root level="INFO">
-            <appender-ref ref="ASYNC_CONSOLE"/>
-        </root>
+        <logger name="com.oneplatform" level="DEBUG"/>
     </springProfile>
 
+    <!-- ===================== PROFILE: staging / prod — add file output ===================== -->
     <springProfile name="staging,prod">
-        <logger name="com.custom.log.custom" level="INFO"/>
+        <logger name="com.oneplatform" level="INFO"/>
         <root level="INFO">
             <appender-ref ref="ASYNC_CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>

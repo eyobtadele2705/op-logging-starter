@@ -4,19 +4,17 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.UUID;
 
-@Component
-@Order(1)
+@Slf4j
 public class TraceFilter extends OncePerRequestFilter {
 
-    public static final String TRACE_ID_HEADER = "X-Request-Id";
+    public static final String TRACE_ID_HEADER  = "X-Request-Id";
     public static final String TRACE_ID_MDC_KEY = "traceId";
 
     @Override
@@ -29,14 +27,18 @@ public class TraceFilter extends OncePerRequestFilter {
             traceId = UUID.randomUUID().toString();
         }
 
-        try {
-            MDC.put(TRACE_ID_MDC_KEY, traceId);
-            // echo it back so callers/clients can correlate too
-            response.setHeader(TRACE_ID_HEADER, traceId);
+        // MDC must be populated FIRST before any log statement
+        MDC.put(TRACE_ID_MDC_KEY, traceId);
+        response.setHeader(TRACE_ID_HEADER, traceId);
 
+        // Now traceId will appear correctly in %X{traceId} for every line below
+        log.info("\nIncoming request: \n{} {} \ntraceId={}\n", request.getMethod(), request.getRequestURI(), traceId);
+
+        try {
             filterChain.doFilter(request, response);
         } finally {
-            // critical: prevents leaking traceId into the next request handled by this thread
+            // Always clean up — prevents traceId leaking into the next
+            // request handled by the same thread (thread pool reuse)
             MDC.remove(TRACE_ID_MDC_KEY);
         }
     }

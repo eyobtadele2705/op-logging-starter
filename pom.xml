@@ -11,7 +11,7 @@
 
     <groupId>com.oneplatform.log</groupId>
     <artifactId>op-logging-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
     <name>op-logging-starter</name>
     <description>Custom logging starter for OnePlatform</description>

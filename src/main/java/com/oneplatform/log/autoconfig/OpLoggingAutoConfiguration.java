@@ -28,6 +28,7 @@ public class OpLoggingAutoConfiguration {
     @Bean
     public FilterRegistrationBean<TraceFilter> traceFilterRegistration() {
         FilterRegistrationBean<TraceFilter> bean = new FilterRegistrationBean<>(new TraceFilter());
+        bean.addUrlPatterns("/*");
         bean.setOrder(1);
         return bean;
     }
